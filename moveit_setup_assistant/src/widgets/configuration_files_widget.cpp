@@ -613,6 +613,8 @@ bool ConfigurationFilesWidget::checkGenFiles()
   for(int i = 0; i < gen_files_.size(); ++i)
   {
     GenerateFile* file = &gen_files_[i];
+    if (file->rel_path_ == ".setup_assistant") // always re-create/overwrite .setup_assistant
+      continue;
 
     fs::path file_path = config_data_->appendPaths(config_data_->config_pkg_path_, file->rel_path_);
 
