@@ -58,7 +58,7 @@ namespace moveit_setup_assistant
 // Boost file system
 namespace fs = boost::filesystem;
 
-const std::string g_setup_assistant_file = ".setup_assistant";
+const std::string SETUP_ASSISTANT_FILE = ".setup_assistant";
 
 // ******************************************************************************************
 // Outer User Interface for MoveIt Configuration Assistant
@@ -428,7 +428,7 @@ bool ConfigurationFilesWidget::loadGenFiles()
   // -------------------------------------------------------------------------------------------------------------------
 
   // .setup_assistant ------------------------------------------------------------------
-  file.file_name_   = g_setup_assistant_file;
+  file.file_name_   = SETUP_ASSISTANT_FILE;
   file.rel_path_    = file.file_name_;
   file.description_ = "MoveIt Setup Assistant's hidden settings file. You should not need to edit this file.";
   file.gen_func_    = boost::bind(&MoveItConfigData::outputSetupAssistantFile, config_data_, _1);
@@ -615,7 +615,7 @@ bool ConfigurationFilesWidget::checkGenFiles()
   for(int i = 0; i < gen_files_.size(); ++i)
   {
     GenerateFile* file = &gen_files_[i];
-    if (file->rel_path_ == g_setup_assistant_file) // always re-create/overwrite .setup_assistant
+    if (file->rel_path_ == SETUP_ASSISTANT_FILE) // always re-create/overwrite .setup_assistant
       continue;
 
     fs::path file_path = config_data_->appendPaths(config_data_->config_pkg_path_, file->rel_path_);
@@ -748,7 +748,7 @@ bool ConfigurationFilesWidget::generatePackage()
   // Get the package name ---------------------------------------------------------------------------------
   new_package_name_ = getPackageName( new_package_path );
 
-  const std::string setup_assistant_file = config_data_->appendPaths( new_package_path, g_setup_assistant_file );
+  const std::string setup_assistant_file = config_data_->appendPaths( new_package_path, SETUP_ASSISTANT_FILE );
 
   // Make sure old package is correct package type and verify over write
   if( fs::is_directory( new_package_path ) && !fs::is_empty( new_package_path ) )
