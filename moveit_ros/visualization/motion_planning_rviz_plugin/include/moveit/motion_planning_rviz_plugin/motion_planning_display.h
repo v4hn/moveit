@@ -55,6 +55,7 @@
 #endif
 
 #include <moveit_msgs/DisplayTrajectory.h>
+#include <QDockWidget>
 
 #include <memory>
 
@@ -235,6 +236,7 @@ protected:
 
   // the planning frame
   MotionPlanningFrame* frame_;
+  QDockWidget* frame_dock_;
 
   // robot interaction
   robot_interaction::RobotInteractionPtr robot_interaction_;
