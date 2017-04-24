@@ -70,7 +70,7 @@ public:
   virtual void onInitialize();
   virtual void onEnable();
   virtual void onDisable();
-  void setName (const QString& name);
+  void setName(const QString& name);
 
 private Q_SLOTS:
   /**
