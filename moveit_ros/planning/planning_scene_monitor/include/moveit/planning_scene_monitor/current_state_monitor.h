@@ -47,6 +47,14 @@
 #include <moveit/macros/deprecation.h>
 #include <boost/thread/condition_variable.hpp>
 
+namespace boost
+{
+namespace signals
+{
+class connection;
+}
+}
+
 namespace planning_scene_monitor
 {
 typedef boost::function<void(const sensor_msgs::JointStateConstPtr& joint_state)> JointStateUpdateCallback;
@@ -193,6 +201,7 @@ public:
 
 private:
   void jointStateCallback(const sensor_msgs::JointStateConstPtr& joint_state);
+  void tfCallback();
   bool isPassiveOrMimicDOF(const std::string& dof) const;
 
   ros::NodeHandle nh_;
@@ -206,11 +215,12 @@ private:
   double error_;
   ros::Subscriber joint_state_subscriber_;
   ros::Time current_state_time_;
-  ros::Time last_tf_update_;
 
   mutable boost::mutex state_update_lock_;
   mutable boost::condition_variable state_update_condition_;
   std::vector<JointStateUpdateCallback> update_callbacks_;
+
+  std::shared_ptr<boost::signals::connection> tf_connection_;
 };
 
 MOVEIT_CLASS_FORWARD(CurrentStateMonitor);

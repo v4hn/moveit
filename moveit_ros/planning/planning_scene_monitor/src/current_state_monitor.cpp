@@ -122,6 +122,11 @@ void planning_scene_monitor::CurrentStateMonitor::startStateMonitor(const std::s
       ROS_ERROR("The joint states topic cannot be an empty string");
     else
       joint_state_subscriber_ = nh_.subscribe(joint_states_topic, 25, &CurrentStateMonitor::jointStateCallback, this);
+    if (tf_ && robot_model_.getMultiDOFJointModels().size() > 0)
+    {
+      tf_connection_.reset(new boost::signals::connection(
+          tf_->addTransformsChangedListener(boost::bind(&CurrentStateMonitor::tfCallback, this))));
+    }
     state_monitor_started_ = true;
     monitor_start_time_ = ros::Time::now();
     ROS_DEBUG("Listening to joint states on topic '%s'", nh_.resolveName(joint_states_topic).c_str());
@@ -138,7 +143,12 @@ void planning_scene_monitor::CurrentStateMonitor::stopStateMonitor()
   if (state_monitor_started_)
   {
     joint_state_subscriber_.shutdown();
-    ROS_DEBUG("No longer listening o joint states");
+    if (tf_ && tf_connection_)
+    {
+      tf_->removeTransformsChangedListener(*tf_connection_);
+      tf_connection_ = nullptr;
+    }
+    ROS_DEBUG("No longer listening for joint states");
     state_monitor_started_ = false;
   }
 }
@@ -391,46 +401,6 @@ void planning_scene_monitor::CurrentStateMonitor::jointStateCallback(const senso
           robot_state_.setJointPositions(jm, &b.max_position_);
       }
     }
-
-    // read root transform, if needed
-    if (tf_ && (robot_model_->getRootJoint()->getType() == robot_model::JointModel::PLANAR ||
-                robot_model_->getRootJoint()->getType() == robot_model::JointModel::FLOATING))
-    {
-      const std::string& child_frame = robot_model_->getRootLink()->getName();
-      const std::string& parent_frame = robot_model_->getModelFrame();
-
-      std::string err;
-      ros::Time tm;
-      tf::StampedTransform transf;
-      bool ok = false;
-      if (tf_->getLatestCommonTime(parent_frame, child_frame, tm, &err) == tf::NO_ERROR)
-      {
-        try
-        {
-          tf_->lookupTransform(parent_frame, child_frame, tm, transf);
-          ok = true;
-        }
-        catch (tf::TransformException& ex)
-        {
-          ROS_ERROR_THROTTLE(1, "Unable to lookup transform from %s to %s.  Exception: %s", parent_frame.c_str(),
-                             child_frame.c_str(), ex.what());
-        }
-      }
-      else
-        ROS_DEBUG_THROTTLE(1, "Unable to lookup transform from %s to %s: no common time.", parent_frame.c_str(),
-                           child_frame.c_str());
-      if (ok && last_tf_update_ != tm)
-      {
-        update = true;
-        last_tf_update_ = tm;
-        const std::vector<std::string>& vars = robot_model_->getRootJoint()->getVariableNames();
-        for (std::size_t j = 0; j < vars.size(); ++j)
-          joint_time_[vars[j]] = tm;
-        Eigen::Affine3d eigen_transf;
-        tf::transformTFToEigen(transf, eigen_transf);
-        robot_state_.setJointPositions(robot_model_->getRootJoint(), eigen_transf);
-      }
-    }
   }
 
   // callbacks, if needed
@@ -440,4 +410,77 @@ void planning_scene_monitor::CurrentStateMonitor::jointStateCallback(const senso
 
   // notify waitForCurrentState() *after* potential update callbacks
   state_update_condition_.notify_all();
+}
+
+void planning_scene_monitor::CurrentStateMonitor::tfCallback()
+{
+  bool update = false;
+  bool changes = false;
+
+  // read multi-dof joint states from TF, if needed
+  const std::vector<const JointState*>& multi_dof_joints = robot_model_->getMultiDOFJointModels();
+  {
+    boost::mutex::scoped_lock _(state_update_lock_);
+    for (const JointModel* joint : multi_dof_joints)
+    {
+      const std::string& child_frame = joint->getChildLinkModel()->getName();
+      const std::string& parent_frame =
+          joint->getParentLinkModel() ? joint->getParentLinkModel()->getName() : robot_model_->getModelFrame();
+
+      std::string err;
+      ros::Time tm;
+      if (!tf_->getLatestCommonTime(parent_frame, child_frame, tm, &err) == tf::NO_ERROR)
+      {
+        ROS_DEBUG_STREAM_THROTTLE(1, "Unable to update multi-dof joint '"
+                                         << joint->getName() << "': tf has no common time between '"
+                                         << parent_frame.c_str() << "' and '" << child_frame.c_str() << "': " << err);
+        continue;
+      }
+
+      const std::vector<std::string>& joint_vars = joint->getVariableNames();
+      assert(joint_vars.size() > 0);
+      if (joint_time_[joint_vars[0]] != tm)
+      {
+        tf::StampedTransform transf;
+        try
+        {
+          tf_->lookupTransform(parent_frame, child_frame, tm, transf);
+        }
+        catch (tf::TransformException& ex)
+        {
+          ROS_ERROR_STREAM_THROTTLE(1, "Unable to update multi-dof joint '" << joint->getName()
+                                                                            << "'. TF exception: " << ex.what());
+          continue;
+        }
+        for (const std::string& var : joint_vars)
+          joint_time_[var] = tm;
+        Eigen::Affine3d eigen_transf;
+        tf::transformTFToEigen(transf, eigen_transf);
+
+        double new_values[joint->getStateSpaceDimension()];
+        joint->computeVariablePositions(eigen_transf, new_values);
+
+        if (joint->distance(new_values, robot_state.getJointPositions(joint)) > 1e-5)
+        {  // TODO ros parameter?
+          changes = true;
+        }
+
+        robot_state_.setJointPositions(joint, eigen_transf);
+        update = true;
+      }
+    }
+  }
+
+  // callbacks, if needed
+  if (changes)
+  {
+    for (std::size_t i = 0; i < update_callbacks_.size(); ++i)
+      update_callbacks_[i](joint_state);
+  }
+
+  if (update)
+  {
+    // notify waitForCurrentState() *after* potential update callbacks
+    state_update_condition_.notify_all();
+  }
 }
