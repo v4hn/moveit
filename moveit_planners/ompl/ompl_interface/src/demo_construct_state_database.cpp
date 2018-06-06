@@ -45,14 +45,14 @@ static const std::string ROBOT_DESCRIPTION = "robot_description";
 moveit_msgs::Constraints getConstraints()
 {
   moveit_msgs::OrientationConstraint ocm;
-  ocm.link_name = "r_wrist_roll_link";
-  ocm.header.frame_id = "torso_lift_link";
+  ocm.link_name = "l_gripper_tool_frame";
+  ocm.header.frame_id = "base_footprint";
   ocm.orientation.x = 0;
   ocm.orientation.y = 0;
   ocm.orientation.z = 0;
   ocm.orientation.w = 1.0;
-  ocm.absolute_x_axis_tolerance = 0.1;
-  ocm.absolute_y_axis_tolerance = 0.1;
+  ocm.absolute_x_axis_tolerance = 0.6;
+  ocm.absolute_y_axis_tolerance = 0.6;
   ocm.absolute_z_axis_tolerance = boost::math::constants::pi<double>();
   ocm.weight = 1.0;
   moveit_msgs::Constraints cmsg;
@@ -75,8 +75,8 @@ void computeDB(const robot_model::RobotModelPtr& robot_model, unsigned int ns, u
   opt.explicit_points_resolution = 0.05;
   opt.max_explicit_points = 10;
 
-  ompl_interface.getConstraintsLibrary().addConstraintApproximation(c, "right_arm", ps, opt);
-  ompl_interface.getConstraintsLibrary().saveConstraintApproximations("~/constraints_approximation_database");
+  ompl_interface.getConstraintsLibrary().addConstraintApproximation(c, "left_arm", ps, opt);
+  ompl_interface.getConstraintsLibrary().saveConstraintApproximations("constraints_approximation_database");
   ROS_INFO("Done");
 }
 
