@@ -71,7 +71,7 @@ void ompl_interface::StateValidityChecker::setVerbose(bool flag)
 bool ompl_interface::StateValidityChecker::isValid(const ompl::base::State* state, bool verbose) const
 {
   //  moveit::Profiler::ScopedBlock sblock("isValid");
-  return planning_context_->useStateValidityCache() ? isValidWithCache(state, verbose) :
+  return /*planning_context_->useStateValidityCache() ? isValidWithCache(state, verbose) :*/
                                                       isValidWithoutCache(state, verbose);
 }
 
@@ -233,6 +233,9 @@ bool ompl_interface::StateValidityChecker::isValidWithCache(const ompl::base::St
   if (state->as<ModelBasedStateSpace::StateType>()->isValidityKnown() &&
       state->as<ModelBasedStateSpace::StateType>()->isGoalDistanceKnown())
   {
+    if (verbose && !state->as<ModelBasedStateSpace::StateType>()->isMarkedValid()){
+      ROS_INFO_NAMED("state_validity_checker", "State known to be invalid");
+    }
     dist = state->as<ModelBasedStateSpace::StateType>()->distance;
     return state->as<ModelBasedStateSpace::StateType>()->isMarkedValid();
   }
