@@ -138,13 +138,13 @@ catkin_package(
     urdfdom_headers
     )
 
-include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS}
-                           ${LIBFCL_INCLUDE_DIRS}
-                           )
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
+
 
 include_directories(${THIS_PACKAGE_INCLUDE_DIRS}
                     ${VERSION_FILE_PATH}
                     ${Boost_INCLUDE_DIRS}
+                    ${LIBFCL_INCLUDE_DIRS}
                     ${catkin_INCLUDE_DIRS}
                     ${urdfdom_INCLUDE_DIRS}
                     ${urdfdom_headers_INCLUDE_DIRS}
