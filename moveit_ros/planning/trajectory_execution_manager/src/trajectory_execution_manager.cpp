@@ -1135,7 +1135,6 @@ moveit_controller_manager::ExecutionStatus TrajectoryExecutionManager::executeAn
 
 void TrajectoryExecutionManager::stopExecutionInternal()
 {
-  // execution_state_mutex_ needs to have been locked by the caller
   for (moveit_controller_manager::MoveItControllerHandlePtr& active_handle : active_handles_)
     try
     {
