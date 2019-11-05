@@ -56,8 +56,8 @@ using namespace moveit_ros_planning;
 class TrajectoryExecutionManager::DynamicReconfigureImpl
 {
 public:
-  DynamicReconfigureImpl(TrajectoryExecutionManager* owner)
-    : owner_(owner), dynamic_reconfigure_server_(ros::NodeHandle("~/trajectory_execution"))
+  DynamicReconfigureImpl(TrajectoryExecutionManager* owner, ros::NodeHandle& nh)
+    : owner_(owner), dynamic_reconfigure_server_(ros::NodeHandle(nh, "trajectory_execution"))
   {
     dynamic_reconfigure_server_.setCallback(
         boost::bind(&DynamicReconfigureImpl::dynamicReconfigureCallback, this, _1, _2));
@@ -171,7 +171,7 @@ void TrajectoryExecutionManager::initialize()
   event_topic_subscriber_ =
       root_node_handle_.subscribe(EXECUTION_EVENT_TOPIC, 100, &TrajectoryExecutionManager::receiveEvent, this);
 
-  reconfigure_impl_ = new DynamicReconfigureImpl(this);
+  reconfigure_impl_ = new DynamicReconfigureImpl(this, node_handle_);
 
   if (manage_controllers_)
     ROS_INFO_NAMED(name_, "Trajectory execution is managing controllers");
