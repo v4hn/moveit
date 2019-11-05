@@ -1530,6 +1530,7 @@ bool TrajectoryExecutionManager::waitForRobotToStop(const TrajectoryExecutionCon
   unsigned int no_motion_count = 0;  // count iterations with no motion
   while (time_remaining > 0. && no_motion_count < 3)
   {
+    // TODO: wait for *next* state update of all joints, not for the new joint state *now*
     if (!csm_->waitForCurrentState(ros::Time::now(), time_remaining) || !(cur_state = csm_->getCurrentState()))
     {
       ROS_WARN_NAMED(name_, "Failed to receive current joint state");
