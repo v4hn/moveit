@@ -204,9 +204,8 @@ public:
   /// to allow more than the expected execution time before triggering trajectory cancel
   void setAllowedGoalDurationMargin(double margin);
 
-  /// Before sending a trajectory to a controller, scale the velocities by the factor specified.
-  /// By default, this is 1.0
-  void setExecutionVelocityScaling(double scaling);
+  [[deprecated("Interface was broken and got removed. Scale trajectories manually before execution.")]] void
+  setExecutionVelocityScaling(double scaling);
 
   /// Set joint-value tolerance for validating trajectory's start point against current robot state
   void setAllowedStartTolerance(double tolerance);
@@ -354,8 +353,6 @@ private:
 
   /// joint tolerance for validate(): radians for revolute joints
   double allowed_start_tolerance_;
-
-  double execution_velocity_scaling_;
 
   bool wait_for_trajectory_completion_;
 };

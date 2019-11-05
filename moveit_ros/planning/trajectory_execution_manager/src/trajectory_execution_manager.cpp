@@ -69,7 +69,6 @@ private:
     owner_->enableExecutionDurationMonitoring(config.execution_duration_monitoring);
     owner_->setAllowedExecutionDurationScaling(config.allowed_execution_duration_scaling);
     owner_->setAllowedGoalDurationMargin(config.allowed_goal_duration_margin);
-    owner_->setExecutionVelocityScaling(config.execution_velocity_scaling);
     owner_->setAllowedStartTolerance(config.allowed_start_tolerance);
     owner_->setWaitForTrajectoryCompletion(config.wait_for_trajectory_completion);
   }
@@ -113,7 +112,6 @@ void TrajectoryExecutionManager::initialize()
   last_execution_status_ = moveit_controller_manager::ExecutionStatus::SUCCEEDED;
   run_continuous_execution_thread_ = true;
   execution_duration_monitoring_ = true;
-  execution_velocity_scaling_ = 1.0;
   allowed_start_tolerance_ = 0.01;
 
   allowed_execution_duration_scaling_ = DEFAULT_CONTROLLER_GOAL_DURATION_SCALING;
@@ -192,11 +190,6 @@ void TrajectoryExecutionManager::setAllowedExecutionDurationScaling(double scali
 void TrajectoryExecutionManager::setAllowedGoalDurationMargin(double margin)
 {
   allowed_goal_duration_margin_ = margin;
-}
-
-void TrajectoryExecutionManager::setExecutionVelocityScaling(double scaling)
-{
-  execution_velocity_scaling_ = scaling;
 }
 
 void TrajectoryExecutionManager::setAllowedStartTolerance(double tolerance)
@@ -859,22 +852,22 @@ bool TrajectoryExecutionManager::distributeTrajectory(const moveit_msgs::RobotTr
               parts[i].multi_dof_joint_trajectory.points[j].velocities.resize(bijection.size());
 
               parts[i].multi_dof_joint_trajectory.points[j].velocities[0].linear.x =
-                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].linear.x * execution_velocity_scaling_;
+                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].linear.x;
 
               parts[i].multi_dof_joint_trajectory.points[j].velocities[0].linear.y =
-                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].linear.y * execution_velocity_scaling_;
+                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].linear.y;
 
               parts[i].multi_dof_joint_trajectory.points[j].velocities[0].linear.z =
-                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].linear.z * execution_velocity_scaling_;
+                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].linear.z;
 
               parts[i].multi_dof_joint_trajectory.points[j].velocities[0].angular.x =
-                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].angular.x * execution_velocity_scaling_;
+                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].angular.x;
 
               parts[i].multi_dof_joint_trajectory.points[j].velocities[0].angular.y =
-                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].angular.y * execution_velocity_scaling_;
+                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].angular.y;
 
               parts[i].multi_dof_joint_trajectory.points[j].velocities[0].angular.z =
-                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].angular.z * execution_velocity_scaling_;
+                  trajectory.multi_dof_joint_trajectory.points[j].velocities[0].angular.z;
             }
           }
         }
@@ -906,7 +899,7 @@ bool TrajectoryExecutionManager::distributeTrajectory(const moveit_msgs::RobotTr
             parts[i].joint_trajectory.points[j].velocities.resize(bijection.size());
             for (std::size_t k = 0; k < bijection.size(); ++k)
               parts[i].joint_trajectory.points[j].velocities[k] =
-                  trajectory.joint_trajectory.points[j].velocities[bijection[k]] * execution_velocity_scaling_;
+                  trajectory.joint_trajectory.points[j].velocities[bijection[k]];
           }
           if (!trajectory.joint_trajectory.points[j].accelerations.empty())
           {
