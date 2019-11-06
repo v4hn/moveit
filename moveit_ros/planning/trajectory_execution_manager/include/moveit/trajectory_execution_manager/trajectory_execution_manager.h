@@ -294,60 +294,61 @@ private:
   /// Name of this class for logging
   const std::string name_ = "trajectory_execution_manager";
 
-  robot_model::RobotModelConstPtr robot_model_;
-  planning_scene_monitor::CurrentStateMonitorPtr csm_;
-  ros::NodeHandle node_handle_;
-  ros::NodeHandle root_node_handle_;
-  ros::Subscriber event_topic_subscriber_;
+  /// Verbose output (currently hardcoded to false)
+  bool verbose_;
 
-  std::map<std::string, ControllerInformation> known_controllers_;
-  bool manage_controllers_;
+  robot_model::RobotModelConstPtr robot_model_;
+
+  /// \name push() / execute() mechanism
+  /// \{
 
   /// Thread used to execute trajectories using the execute() command
   std::unique_ptr<boost::thread> execution_thread_;
-
-  /// Thread used to execute trajectories using pushAndExecute()
-  std::unique_ptr<boost::thread> continuous_execution_thread_;
-
-  boost::mutex execution_state_mutex_;
-  boost::mutex continuous_execution_mutex_;
-
-  /// Notify continuousExecutionThread upon pushAndExecute
-  boost::condition_variable continuous_execution_condition_;
-
+  /// Trajectories scheduled for execution with execute()
+  std::vector<TrajectoryExecutionContext*> trajectories_;
+  /// Index of currently executing trajectory in trajectories_
+  int current_context_;
+  /// Controllers currently used by execute()
+  std::vector<moveit_controller_manager::MoveItControllerHandlePtr> active_handles_;
+  /// Indicate finished execution
+  bool execution_complete_;
   /// Notify waitForExecution upon completion of execute()
   boost::condition_variable execution_complete_condition_;
-
-  moveit_controller_manager::ExecutionStatus last_execution_status_;
-
-  std::vector<moveit_controller_manager::MoveItControllerHandlePtr> active_handles_;
-  int current_context_;
+  boost::mutex execution_state_mutex_;
 
   /// used to find current expected trajectory location
   std::vector<ros::Time> time_index_;
   mutable boost::mutex time_index_mutex_;
+  /// \}
 
-  bool execution_complete_;
-  bool stop_continuous_execution_;
+  /// \name pushAndExecute() mechanism
+  /// \{
+  /// Thread executing trajectories using pushAndExecute()
+  std::unique_ptr<boost::thread> continuous_execution_thread_;
+  /// Request shutdown of thread
   bool run_continuous_execution_thread_;
-
-  std::vector<TrajectoryExecutionContext*> trajectories_;
+  /// Trajectories scheduled for execution with pushAndExecute()
   std::deque<TrajectoryExecutionContext*> continuous_execution_queue_;
+  /// Protects continuous_execution_thread_ and continuous_execution_queue_
+  boost::mutex continuous_execution_mutex_;
+  /// Indicate request to clear trajectories scheduled via pushAndExecute()
+  bool stop_continuous_execution_;
+  /// Wake up continuousExecutionThread
+  /// Also signals empty processing queue from within continuousExecutionThread
+  boost::condition_variable continuous_execution_condition_;
+  /// \}
 
-  std::unique_ptr<pluginlib::ClassLoader<moveit_controller_manager::MoveItControllerManager> >
-      controller_manager_loader_;
-  moveit_controller_manager::MoveItControllerManagerPtr controller_manager_;
+  moveit_controller_manager::ExecutionStatus last_execution_status_;
 
-  bool verbose_;
+  /// \name Execution monitoring
+  /// \{
 
-  class DynamicReconfigureImpl;
-  DynamicReconfigureImpl* reconfigure_impl_;
-
+  /// Cancel trajectories that take too long?
   bool execution_duration_monitoring_;
-  /// default parameters for duration monitoring
+  /// Default parameters for duration monitoring
   double allowed_execution_duration_scaling_;
   double allowed_goal_duration_margin_;
-  /// controller-specific overwrites
+  /// Controller-specific overwrites
   std::map<std::string, double> controller_allowed_execution_duration_scaling_;
   std::map<std::string, double> controller_allowed_goal_duration_margin_;
 
@@ -355,5 +356,26 @@ private:
   double allowed_start_tolerance_;
 
   bool wait_for_trajectory_completion_;
+  /// \}
+
+  /// \name Framework interfaces
+  /// \{
+  planning_scene_monitor::CurrentStateMonitorPtr csm_;
+  ros::NodeHandle node_handle_;
+  ros::NodeHandle root_node_handle_;
+  ros::Subscriber event_topic_subscriber_;
+
+  class DynamicReconfigureImpl;
+  DynamicReconfigureImpl* reconfigure_impl_;
+  /// \}
+
+  /// \name ControllerManager
+  /// \{
+  std::unique_ptr<pluginlib::ClassLoader<moveit_controller_manager::MoveItControllerManager> >
+      controller_manager_loader_;
+  moveit_controller_manager::MoveItControllerManagerPtr controller_manager_;
+  bool manage_controllers_;
+  std::map<std::string, ControllerInformation> known_controllers_;
+  /// \}
 };
 }
