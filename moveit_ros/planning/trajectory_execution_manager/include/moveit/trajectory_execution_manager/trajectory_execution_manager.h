@@ -44,9 +44,12 @@
 #include <std_msgs/String.h>
 #include <ros/ros.h>
 #include <moveit/controller_manager/controller_manager.h>
-#include <boost/thread.hpp>
 #include <pluginlib/class_loader.hpp>
 
+#include <functional>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include <memory>
 
 namespace trajectory_execution_manager
@@ -63,11 +66,11 @@ public:
 
   /// Definition of the function signature that is called when the execution of all the pushed trajectories completes.
   /// The status of the overall execution is passed as argument
-  typedef boost::function<void(const moveit_controller_manager::ExecutionStatus&)> ExecutionCompleteCallback;
+  typedef std::function<void(const moveit_controller_manager::ExecutionStatus&)> ExecutionCompleteCallback;
 
   /// Definition of the function signature that is called when the execution of a pushed trajectory completes
   /// successfully.
-  typedef boost::function<void(std::size_t)> PathSegmentCompleteCallback;
+  typedef std::function<void(std::size_t)> PathSegmentCompleteCallback;
 
   /// Data structure that represents information necessary to execute a trajectory
   struct TrajectoryExecutionContext
@@ -303,7 +306,7 @@ private:
   /// \{
 
   /// Thread used to execute trajectories using the execute() command
-  std::unique_ptr<boost::thread> execution_thread_;
+  std::unique_ptr<std::thread> execution_thread_;
   /// Trajectories scheduled for execution with execute()
   std::vector<TrajectoryExecutionContext*> trajectories_;
   /// Index of currently executing trajectory in trajectories_
@@ -313,29 +316,30 @@ private:
   /// Indicate finished execution
   bool execution_complete_;
   /// Notify waitForExecution upon completion of execute()
-  boost::condition_variable execution_complete_condition_;
-  boost::mutex execution_state_mutex_;
+  std::condition_variable execution_complete_condition_;
+  // TODO: What's protected here?
+  std::mutex execution_state_mutex_;
 
   /// used to find current expected trajectory location
   std::vector<ros::Time> time_index_;
-  mutable boost::mutex time_index_mutex_;
+  mutable std::mutex time_index_mutex_;
   /// \}
 
   /// \name pushAndExecute() mechanism
   /// \{
   /// Thread executing trajectories using pushAndExecute()
-  std::unique_ptr<boost::thread> continuous_execution_thread_;
+  std::unique_ptr<std::thread> continuous_execution_thread_;
   /// Request shutdown of thread
   bool run_continuous_execution_thread_;
   /// Trajectories scheduled for execution with pushAndExecute()
   std::deque<TrajectoryExecutionContext*> continuous_execution_queue_;
   /// Protects continuous_execution_thread_ and continuous_execution_queue_
-  boost::mutex continuous_execution_mutex_;
+  std::mutex continuous_execution_mutex_;
   /// Indicate request to clear trajectories scheduled via pushAndExecute()
   bool stop_continuous_execution_;
   /// Wake up continuousExecutionThread
   /// Also signals empty processing queue from within continuousExecutionThread
-  boost::condition_variable continuous_execution_condition_;
+  std::condition_variable continuous_execution_condition_;
   /// \}
 
   moveit_controller_manager::ExecutionStatus last_execution_status_;

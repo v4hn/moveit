@@ -346,10 +346,10 @@ bool TrajectoryExecutionManager::pushAndExecute(const moveit_msgs::RobotTrajecto
   if (configure(*context, trajectory, controllers))
   {
     {
-      boost::mutex::scoped_lock slock(continuous_execution_mutex_);
+      std::lock_guard<std::mutex> lock(continuous_execution_mutex_);
       continuous_execution_queue_.push_back(context);
       if (!continuous_execution_thread_)
-        continuous_execution_thread_.reset(new boost::thread([this]() { continuousExecutionThread(); }));
+        continuous_execution_thread_.reset(new std::thread([this]() { continuousExecutionThread(); }));
     }
     last_execution_status_ = moveit_controller_manager::ExecutionStatus::SUCCEEDED;
     continuous_execution_condition_.notify_all();
@@ -370,7 +370,7 @@ void TrajectoryExecutionManager::continuousExecutionThread()
   {
     if (!stop_continuous_execution_)
     {
-      boost::unique_lock<boost::mutex> ulock(continuous_execution_mutex_);
+      std::unique_lock<std::mutex> ulock(continuous_execution_mutex_);
       while (continuous_execution_queue_.empty() && run_continuous_execution_thread_ && !stop_continuous_execution_)
         continuous_execution_condition_.wait(ulock);
     }
@@ -395,7 +395,7 @@ void TrajectoryExecutionManager::continuousExecutionThread()
     {
       TrajectoryExecutionContext* context = nullptr;
       {
-        boost::mutex::scoped_lock slock(continuous_execution_mutex_);
+        std::lock_guard<std::mutex> lock(continuous_execution_mutex_);
         if (continuous_execution_queue_.empty())
           break;
         context = continuous_execution_queue_.front();
@@ -1202,18 +1202,18 @@ void TrajectoryExecutionManager::execute(const ExecutionCompleteCallback& callba
   // start the execution thread
   execution_complete_ = false;
   execution_thread_.reset(
-      new boost::thread(&TrajectoryExecutionManager::executeThread, this, callback, part_callback, auto_clear));
+      new std::thread(&TrajectoryExecutionManager::executeThread, this, callback, part_callback, auto_clear));
 }
 
 moveit_controller_manager::ExecutionStatus TrajectoryExecutionManager::waitForExecution()
 {
   {
-    boost::unique_lock<boost::mutex> ulock(execution_state_mutex_);
+    std::unique_lock<std::mutex> ulock(execution_state_mutex_);
     while (!execution_complete_)
       execution_complete_condition_.wait(ulock);
   }
   {
-    boost::unique_lock<boost::mutex> ulock(continuous_execution_mutex_);
+    std::unique_lock<std::mutex> ulock(continuous_execution_mutex_);
     while (!continuous_execution_queue_.empty())
       continuous_execution_condition_.wait(ulock);
   }
@@ -1232,7 +1232,7 @@ void TrajectoryExecutionManager::clear()
       delete trajectory;
     trajectories_.clear();
     {
-      boost::mutex::scoped_lock slock(continuous_execution_mutex_);
+      std::lock_guard<std::mutex> lock(continuous_execution_mutex_);
       while (!continuous_execution_queue_.empty())
       {
         delete continuous_execution_queue_.front();
@@ -1309,7 +1309,7 @@ bool TrajectoryExecutionManager::executePart(std::size_t part_index)
 
     std::vector<moveit_controller_manager::MoveItControllerHandlePtr> handles;
     {
-      boost::mutex::scoped_lock slock(execution_state_mutex_);
+      std::lock_guard<std::mutex> lock(execution_state_mutex_);
       if (!execution_complete_)
       {
         // time indexing uses this member too, so we lock this mutex as well
@@ -1427,7 +1427,7 @@ bool TrajectoryExecutionManager::executePart(std::size_t part_index)
     // construct a map from expected time to state index, for easy access to expected state location
     if (longest_part >= 0)
     {
-      boost::mutex::scoped_lock slock(time_index_mutex_);
+      std::lock_guard<std::mutex> lock(time_index_mutex_);
 
       if (context.trajectory_parts_[longest_part].joint_trajectory.points.size() >=
           context.trajectory_parts_[longest_part].multi_dof_joint_trajectory.points.size())
@@ -1462,7 +1462,7 @@ bool TrajectoryExecutionManager::executePart(std::size_t part_index)
                                    "bound for the trajectory execution was %lf seconds). Stopping trajectory.",
                             expected_trajectory_duration.toSec());
             {
-              boost::mutex::scoped_lock slock(execution_state_mutex_);
+              std::lock_guard<std::mutex> lock(execution_state_mutex_);
               stopExecutionInternal();  // this is really tricky. we can't call stopExecution() here, so we call the
                                         // internal function only
             }
@@ -1571,7 +1571,7 @@ bool TrajectoryExecutionManager::waitForRobotToStop(const TrajectoryExecutionCon
 
 std::pair<int, int> TrajectoryExecutionManager::getCurrentExpectedTrajectoryIndex() const
 {
-  boost::mutex::scoped_lock slock(time_index_mutex_);
+  std::lock_guard<std::mutex> lock(time_index_mutex_);
   if (current_context_ < 0)
     return std::make_pair(-1, -1);
   if (time_index_.empty())
