@@ -1241,7 +1241,7 @@ void TrajectoryExecutionManager::clear()
     }
   }
   else
-    ROS_ERROR_NAMED(name_, "Cannot push a new trajectory while another is being executed");
+    ROS_ERROR_NAMED(name_, "Cannot clear scheduled trajectories during execution.");
 }
 
 void TrajectoryExecutionManager::executeThread(const ExecutionCompleteCallback& callback,
