@@ -37,8 +37,8 @@ catkin_package(
 
 include_directories(ompl_interface/include
                     ${Boost_INCLUDE_DIRS}
-                    ${catkin_INCLUDE_DIRS}
-                    ${OMPL_INCLUDE_DIRS})
+                    ${OMPL_INCLUDE_DIRS}
+                    ${catkin_INCLUDE_DIRS})
 
 add_subdirectory(ompl_interface)
 
