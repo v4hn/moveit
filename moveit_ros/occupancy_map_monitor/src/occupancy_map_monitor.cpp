@@ -100,6 +100,15 @@ void OccupancyMapMonitor::initialize()
                                                         "No transforms will be applied to received data.");
 
   tree_ = std::make_shared<collision_detection::OccMapTree>(map_resolution_);
+  float max_range = nh_.param("max_range", 0.0);
+  if (max_range > 0.0)
+  {
+    tree_->useBBXLimit(true);
+    octomap::point3d min_pt{ -max_range / 2, -max_range / 2, -max_range / 2 };
+    octomap::point3d max_pt{ max_range / 2, max_range / 2, max_range / 2 };
+    tree_->setBBXMin(min_pt);
+    tree_->setBBXMax(max_pt);
+  }
   tree_const_ = tree_;
 
   XmlRpc::XmlRpcValue sensor_list;
