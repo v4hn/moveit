@@ -1471,6 +1471,13 @@ as the new values that correspond to the group */
   /** \brief Update the state after setting a particular link to the input global transform pose.*/
   void updateStateWithLinkAt(const LinkModel* link, const Eigen::Isometry3d& transform, bool backward = false);
 
+  /** \brief Get the latest link upwards the kinematic tree which is only connected via fixed joints.
+   *
+   * This behaves the same as RobotModel::getRigidlyConnectedParentLinkModel,
+   * but can additionally resolve parents for attached objects / subframes.
+   */
+  const moveit::core::LinkModel* getRigidlyConnectedParentLinkModel(const std::string& frame) const;
+
   const Eigen::Isometry3d& getGlobalLinkTransform(const std::string& link_name)
   {
     return getGlobalLinkTransform(robot_model_->getLinkModel(link_name));
