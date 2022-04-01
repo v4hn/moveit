@@ -221,9 +221,9 @@ protected:
                                                   const StateSpaceFactoryTypeSelector& factory_selector,
                                                   const moveit_msgs::MotionPlanRequest& req) const;
 
-  const ModelBasedStateSpaceFactoryPtr& getStateSpaceFactory(const std::string& factory_type) const;
-  const ModelBasedStateSpaceFactoryPtr& getStateSpaceFactory(const std::string& group_name,
-                                                             const moveit_msgs::MotionPlanRequest& req) const;
+  ModelBasedStateSpaceFactoryPtr getStateSpaceFactory(const std::string& factory_type) const;
+  ModelBasedStateSpaceFactoryPtr getStateSpaceFactory(const std::string& group_name,
+                                                      const moveit_msgs::MotionPlanRequest& req) const;
 
   /** \brief The kinematic model for which motion plans are computed */
   moveit::core::RobotModelConstPtr robot_model_;

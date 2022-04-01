@@ -367,7 +367,7 @@ ompl_interface::ModelBasedPlanningContextPtr ompl_interface::PlanningContextMana
   return context;
 }
 
-const ompl_interface::ModelBasedStateSpaceFactoryPtr&
+ompl_interface::ModelBasedStateSpaceFactoryPtr
 ompl_interface::PlanningContextManager::getStateSpaceFactory(const std::string& factory_type) const
 {
   auto f = factory_type.empty() ? state_space_factories_.begin() : state_space_factories_.find(factory_type);
@@ -381,7 +381,7 @@ ompl_interface::PlanningContextManager::getStateSpaceFactory(const std::string& 
   }
 }
 
-const ompl_interface::ModelBasedStateSpaceFactoryPtr&
+ompl_interface::ModelBasedStateSpaceFactoryPtr
 ompl_interface::PlanningContextManager::getStateSpaceFactory(const std::string& group,
                                                              const moveit_msgs::MotionPlanRequest& req) const
 {
