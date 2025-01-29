@@ -53,7 +53,7 @@ bool pilz_industrial_motion_planner::PlanningContextLoaderLIN::loadContext(
 {
   if (limits_set_ && model_set_)
   {
-    planning_context = std::make_shared<PlanningContextLIN>(name, group, model_, limits_);
+    planning_context = std::make_shared<PlanningContextLIN>(name, group, model_, limits_, sampling_time_);
     return true;
   }
   else

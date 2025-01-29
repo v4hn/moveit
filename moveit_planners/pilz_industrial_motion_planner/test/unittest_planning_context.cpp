@@ -112,8 +112,10 @@ protected:
     limits.setJointLimits(joint_limits);
     limits.setCartesianLimits(cartesian_limit);
 
+    const double sampling_time = 0.1;
+
     planning_context_ = std::unique_ptr<typename T::Type_>(
-        new typename T::Type_("TestPlanningContext", planning_group_, robot_model_, limits));
+        new typename T::Type_("TestPlanningContext", planning_group_, robot_model_, limits, sampling_time));
 
     // Define and set the current scene
     planning_scene::PlanningScenePtr scene(new planning_scene::PlanningScene(robot_model_));

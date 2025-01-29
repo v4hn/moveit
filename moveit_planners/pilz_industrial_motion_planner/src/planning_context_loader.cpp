@@ -58,6 +58,12 @@ bool pilz_industrial_motion_planner::PlanningContextLoader::setLimits(
   return true;
 }
 
+bool pilz_industrial_motion_planner::PlanningContextLoader::setSamplingTime(double sampling_time)
+{
+  sampling_time_ = sampling_time;
+  return true;
+}
+
 std::string pilz_industrial_motion_planner::PlanningContextLoader::getAlgorithm() const
 {
   return alg_;

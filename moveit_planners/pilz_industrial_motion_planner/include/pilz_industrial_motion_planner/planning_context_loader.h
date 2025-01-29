@@ -76,6 +76,13 @@ public:
   virtual bool setLimits(const pilz_industrial_motion_planner::LimitsContainer& limits);
 
   /**
+   * @brief Set time between consecutive waypoint samples
+   * @param sampling_time duration in seconds
+   * @return true if sampling time could be set
+   */
+  virtual bool setSamplingTime(double sampling_time);
+
+  /**
    * @brief Return the planning context
    * @param planning_context
    * @param name context name
@@ -106,6 +113,9 @@ protected:
 
   /// Limits to be used during planning
   pilz_industrial_motion_planner::LimitsContainer limits_;
+
+  /// sample time for generated trajectories
+  double sampling_time_;
 
   /// True if model is set
   bool model_set_;

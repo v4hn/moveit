@@ -58,11 +58,12 @@ class PlanningContextBase : public planning_interface::PlanningContext
 public:
   PlanningContextBase<GeneratorT>(const std::string& name, const std::string& group,
                                   const moveit::core::RobotModelConstPtr& model,
-                                  const pilz_industrial_motion_planner::LimitsContainer& limits)
+                                  const pilz_industrial_motion_planner::LimitsContainer& limits, double sampling_time)
     : planning_interface::PlanningContext(name, group)
     , terminated_(false)
     , model_(model)
     , limits_(limits)
+    , sampling_time_(sampling_time)
     , generator_(model, limits_, group)
   {
   }
@@ -112,6 +113,9 @@ public:
   /// Joint limits to be used during planning
   pilz_industrial_motion_planner::LimitsContainer limits_;
 
+  /// sampling time to use for the generated trajectories
+  double sampling_time_;
+
 protected:
   GeneratorT generator_;
 };
@@ -121,7 +125,7 @@ bool pilz_industrial_motion_planner::PlanningContextBase<GeneratorT>::solve(plan
 {
   if (!terminated_)
   {
-    return generator_.generate(getPlanningScene(), request_, res);
+    return generator_.generate(getPlanningScene(), request_, res, sampling_time_);
   }
 
   ROS_ERROR("Using solve on a terminated planning context!");

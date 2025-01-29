@@ -54,12 +54,10 @@ MOVEIT_CLASS_FORWARD(PlanningContext);
  */
 class PlanningContextLIN : public pilz_industrial_motion_planner::PlanningContextBase<TrajectoryGeneratorLIN>
 {
+  using Base = pilz_industrial_motion_planner::PlanningContextBase<TrajectoryGeneratorLIN>;
+
 public:
-  PlanningContextLIN(const std::string& name, const std::string& group, const moveit::core::RobotModelConstPtr& model,
-                     const pilz_industrial_motion_planner::LimitsContainer& limits)
-    : pilz_industrial_motion_planner::PlanningContextBase<TrajectoryGeneratorLIN>(name, group, model, limits)
-  {
-  }
+  using Base::Base;
 };
 
 }  // namespace pilz_industrial_motion_planner

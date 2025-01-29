@@ -61,17 +61,20 @@ bool CommandPlanner::initialize(const moveit::core::RobotModelConstPtr& model, c
   model_ = model;
   namespace_ = ns;
 
+  ros::NodeHandle nh_param(PARAM_NAMESPACE_LIMTS);
+
   // Obtain the aggregated joint limits
   aggregated_limit_active_joints_ = pilz_industrial_motion_planner::JointLimitsAggregator::getAggregatedLimits(
-      ros::NodeHandle(PARAM_NAMESPACE_LIMTS), model->getActiveJointModels());
+      nh_param, model->getActiveJointModels());
 
   // Obtain cartesian limits
-  cartesian_limit_ = pilz_industrial_motion_planner::CartesianLimitsAggregator::getAggregatedLimits(
-      ros::NodeHandle(PARAM_NAMESPACE_LIMTS));
+  cartesian_limit_ = pilz_industrial_motion_planner::CartesianLimitsAggregator::getAggregatedLimits(nh_param);
 
   // Load the planning context loader
   planner_context_loader = std::make_unique<pluginlib::ClassLoader<PlanningContextLoader>>(
       "pilz_industrial_motion_planner", "pilz_industrial_motion_planner::PlanningContextLoader");
+
+  double sampling_time = nh_param.param<double>("sampling_time", 0.1);
 
   // List available plugins
   const std::vector<std::string>& factories = planner_context_loader->getDeclaredClasses();
@@ -94,6 +97,7 @@ bool CommandPlanner::initialize(const moveit::core::RobotModelConstPtr& model, c
     limits.setCartesianLimits(cartesian_limit_);
 
     loader_pointer->setLimits(limits);
+    loader_pointer->setSamplingTime(sampling_time);
     loader_pointer->setModel(model_);
 
     registerContextLoader(loader_pointer);
